@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Backtest",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/backtest.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONIOENCODING": "utf-8"
+            }
+        },
+        {
+            "name": "Main (live)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONIOENCODING": "utf-8"
+            }
+        }
+    ]
+}
