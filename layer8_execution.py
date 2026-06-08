@@ -27,6 +27,7 @@ class PaperOrder:
     signal_id: str
     market_id: str
     market_question: str
+    market_url: str
     category: str
     action: str              # BUY_YES | BUY_NO
     entry_price: float       # p_yes al momento de la señal
@@ -79,6 +80,7 @@ def initialize():
                 signal_id         TEXT,
                 market_id         TEXT,
                 market_question   TEXT,
+                market_url        TEXT DEFAULT '',
                 category          TEXT,
                 action            TEXT,
                 entry_price       REAL,
@@ -109,6 +111,10 @@ def initialize():
             "INSERT OR IGNORE INTO portfolio_state (timestamp, cash, realized_pnl) VALUES (datetime('now'), ?, 0.0)",
             (STARTING_CAPITAL,),
         )
+        try:
+            conn.execute("ALTER TABLE paper_orders ADD COLUMN market_url TEXT DEFAULT ''")
+        except Exception:
+            pass
     logger.info(f"Paper trading DB initialized (capital: ${STARTING_CAPITAL:,.0f} USDC)")
 
 
@@ -205,6 +211,7 @@ def open_paper_order(signal: DeltaSignal) -> Optional[PaperOrder]:
         signal_id=signal.signal_id,
         market_id=signal.market.id,
         market_question=signal.market.question,
+        market_url=signal.market.url,
         category=signal.market.category,
         action=signal.action,
         entry_price=entry_price,
@@ -224,15 +231,15 @@ def open_paper_order(signal: DeltaSignal) -> Optional[PaperOrder]:
     with _db() as conn:
         conn.execute("""
             INSERT INTO paper_orders (
-                order_id, signal_id, market_id, market_question, category,
+                order_id, signal_id, market_id, market_question, market_url, category,
                 action, entry_price, shares, usdc_invested, portfolio_at_entry,
                 p_simulated, delta, confidence, crowd_narrative, timestamp
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             order.order_id, order.signal_id, order.market_id, order.market_question,
-            order.category, order.action, order.entry_price, order.shares,
-            order.usdc_invested, order.portfolio_at_entry, order.p_simulated,
-            order.delta, order.confidence, order.crowd_narrative,
+            order.market_url, order.category, order.action, order.entry_price,
+            order.shares, order.usdc_invested, order.portfolio_at_entry,
+            order.p_simulated, order.delta, order.confidence, order.crowd_narrative,
             order.timestamp.isoformat(),
         ))
 

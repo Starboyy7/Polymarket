@@ -12,6 +12,7 @@ class Market:
     volume: float
     condition_id: str = ""
     description: str = ""
+    url: str = ""
 
 
 @dataclass

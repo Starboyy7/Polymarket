@@ -102,13 +102,14 @@ def print_report(results: List[Tuple[DeltaSignal, str]]):
     for o in resolved:
         won = o["pnl_usdc"] > 0
         icon = "OK" if won else "XX"
+        url_line = f"\n  URL      : {o['market_url']}" if o.get('market_url') else ""
         print(f"""
   [{icon}] {o['order_id']} — {o['action']}
-  Mercado  : {o['market_question'][:63]}
-  Categoría: {o['category']}
-  Entrada  : {o['entry_price']:.3f} | P_sim: {o['p_simulated']:.3f} | Δ: {o['delta']:+.3f}
+  Mercado  : {o['market_question'][:63]}{url_line}
+  Categoria: {o['category']}
+  Entrada  : {o['entry_price']:.3f} | P_sim: {o['p_simulated']:.3f} | Delta: {o['delta']:+.3f}
   Invertido: ${o['usdc_invested']:.2f} USDC | Acciones: {o['shares']:.2f}
-  Outcome  : {o['outcome']} → P&L: ${o['pnl_usdc']:+.2f} ({o['pnl_pct']:+.1f}%)
+  Outcome  : {o['outcome']} -> P&L: ${o['pnl_usdc']:+.2f} ({o['pnl_pct']:+.1f}%)
   {'-'*63}""")
 
     # Categorías con mejor performance
