@@ -26,12 +26,24 @@ def fetch_markets(limit: int = 50) -> List[Market]:
             timeout=12,
         )
         resp.raise_for_status()
+        data = resp.json()
+        if data:
+            sample = data[0]
+            logger.info(f"API fields: {list(sample.keys())}")
+            events_sample = sample.get("events", [])
+            if events_sample:
+                logger.info(f"events[0] fields: {list(events_sample[0].keys())}")
+
         markets = []
-        for m in resp.json():
+        for m in data:
             p_yes = _parse_price(m)
             if p_yes is None or not (0.01 < p_yes < 0.99):
                 continue
-            slug = m.get("slug", "")
+            # Try event slug first, fall back to market slug
+            events = m.get("events", [])
+            event_slug = events[0].get("slug", "") if events else ""
+            market_slug = m.get("slug", "")
+            slug = event_slug or market_slug
             markets.append(Market(
                 id=str(m.get("id", "")),
                 question=m.get("question", "").strip(),
