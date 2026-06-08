@@ -1,26 +1,41 @@
 import os
+import sys
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-CLAUDE_SESSION_TOKEN_FILE = os.environ.get(
-    "CLAUDE_SESSION_INGRESS_TOKEN_FILE",
-    "/home/claude/.claude/remote/.session_ingress_token",
-)
 CLAUDE_MODEL = "claude-sonnet-4-6"
+
+# Rutas del token de sesión según plataforma (usado solo en Claude Code cloud)
+_SESSION_TOKEN_CANDIDATES = [
+    os.environ.get("CLAUDE_SESSION_INGRESS_TOKEN_FILE", ""),
+    "/home/claude/.claude/remote/.session_ingress_token",          # Linux cloud
+    os.path.expanduser("~/.claude/remote/.session_ingress_token"), # Linux/Mac local
+]
 
 
 def get_anthropic_client():
-    """Returns an authenticated Anthropic client using API key or session token."""
+    """Retorna un cliente Anthropic autenticado.
+    Prioridad: ANTHROPIC_API_KEY → token de sesión Claude Code.
+    En Windows/local: configura ANTHROPIC_API_KEY en variables de entorno.
+    """
     import anthropic
     if ANTHROPIC_API_KEY:
         return anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    try:
-        token = open(CLAUDE_SESSION_TOKEN_FILE).read().strip()
-        return anthropic.Anthropic(auth_token=token)
-    except Exception:
-        raise RuntimeError(
-            "No se encontró ANTHROPIC_API_KEY ni token de sesión. "
-            "Configura la variable ANTHROPIC_API_KEY."
-        )
+    for path in _SESSION_TOKEN_CANDIDATES:
+        if path and os.path.exists(path):
+            try:
+                token = open(path).read().strip()
+                if token:
+                    return anthropic.Anthropic(auth_token=token)
+            except Exception:
+                pass
+    raise RuntimeError(
+        "\n\n  ❌  API key no encontrada.\n"
+        "  Configura la variable de entorno ANTHROPIC_API_KEY:\n\n"
+        "  Windows CMD:   set ANTHROPIC_API_KEY=sk-ant-...\n"
+        "  Windows PS:    $env:ANTHROPIC_API_KEY='sk-ant-...'\n"
+        "  Mac/Linux:     export ANTHROPIC_API_KEY=sk-ant-...\n\n"
+        "  Obtén tu key en: https://console.anthropic.com\n"
+    )
 
 POLYMARKET_GAMMA_API = "https://gamma-api.polymarket.com"
 POLYMARKET_CLOB_API  = "https://clob.polymarket.com"
