@@ -90,16 +90,26 @@ def print_report(signals: List[DeltaSignal]):
 
     print(f"\n{'-'*65}")
     for s in signals:
-        bar = "SUBE" if s.delta > 0 else "BAJA"
+        if s.action == "BUY_YES":
+            precio_entrada = s.p_polymarket
+            accion = f"COMPRAR YES  a {precio_entrada*100:.0f}c  (apostar a que SI ocurre)"
+        else:
+            precio_entrada = 1.0 - s.p_polymarket
+            accion = f"COMPRAR NO   a {precio_entrada*100:.0f}c  (apostar a que NO ocurre)"
+
+        edge = abs(s.delta) * 100
         url_line = f"\n  URL        : {s.market.url}" if s.market.url else ""
         print(f"""
-  [{s.signal_id}] {s.action} — {bar}
+  [{s.signal_id}]
   Mercado    : {s.market.question[:65]}{url_line}
   Categoria  : {s.market.category}
-  P_mercado  : {s.p_polymarket:.3f} ({s.p_polymarket*100:.1f}%)
-  P_simulada : {s.p_simulated:.3f} ({s.p_simulated*100:.1f}%)
-  Delta      : {s.delta:+.3f} ({s.delta*100:+.1f}pp)
-  Confianza  : {s.confidence:.2f}
+  -------------------------------------------------------
+  SENAL      : {accion}
+  Edge       : {edge:.1f}pp de ventaja | Confianza: {s.confidence:.2f}
+  -------------------------------------------------------
+  P_mercado  : {s.p_polymarket*100:.1f}%   (precio actual en Polymarket)
+  P_modelo   : {s.p_simulated*100:.1f}%   (lo que nuestro sistema estima)
+  Delta      : {s.delta*100:+.1f}pp
   Narrativa  : {s.crowd_signal.narrative[:120]}
   Fuente     : {s.filtered_signal.news.source} — {s.filtered_signal.news.title[:55]}
   {'-'*63}""")
