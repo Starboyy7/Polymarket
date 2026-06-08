@@ -1,8 +1,47 @@
 """Orchestrador principal — pipeline en vivo con mercados reales de Polymarket."""
 import logging
+import re
 import sys
 from datetime import datetime
 from typing import List
+
+_MESES = {
+    "january": "enero", "february": "febrero", "march": "marzo",
+    "april": "abril", "may": "mayo", "june": "junio",
+    "july": "julio", "august": "agosto", "september": "septiembre",
+    "october": "octubre", "november": "noviembre", "december": "diciembre",
+}
+
+def _fecha_limite(question: str) -> str:
+    """Extrae la fecha limite del titulo del mercado y la devuelve en español."""
+    # "by/before/until June 15, 2026"
+    m = re.search(
+        r'\b(?:by|before|until|on)\s+'
+        r'(January|February|March|April|May|June|July|August|September|October|November|December)'
+        r'\s+(\d{1,2})(?:,?\s*(\d{4}))?',
+        question, re.IGNORECASE
+    )
+    if m:
+        mes = _MESES.get(m.group(1).lower(), m.group(1))
+        dia = m.group(2)
+        return f"{dia} DE {mes.upper()}"
+
+    # "Q1 2026" / "Q3 2025"
+    m = re.search(r'\b(Q[1-4])\s+(\d{4})\b', question, re.IGNORECASE)
+    if m:
+        return f"{m.group(1)} {m.group(2)}"
+
+    # "in June 2026"
+    m = re.search(
+        r'\bin\s+(January|February|March|April|May|June|July|August|'
+        r'September|October|November|December)\s+(\d{4})',
+        question, re.IGNORECASE
+    )
+    if m:
+        mes = _MESES.get(m.group(1).lower(), m.group(1))
+        return f"{mes.upper()} {m.group(2)}"
+
+    return ""
 
 import layer1_ingestion  as capa1
 import layer2_filter     as capa2
@@ -115,12 +154,15 @@ def print_report(signals: List[DeltaSignal]):
 
     print(f"\n{'-'*65}")
     for s in signals:
+        fecha = _fecha_limite(s.market.question)
         if s.action == "BUY_YES":
             precio_entrada = s.p_polymarket
-            accion = f"COMPRAR YES  a {precio_entrada*100:.0f}c  (apostar a que SI ocurre)"
+            plazo = f" AL {fecha}" if fecha else ""
+            accion = f"COMPRAR YES{plazo}  ({precio_entrada*100:.0f}c por contrato)"
         else:
             precio_entrada = 1.0 - s.p_polymarket
-            accion = f"COMPRAR NO   a {precio_entrada*100:.0f}c  (apostar a que NO ocurre)"
+            plazo = f" AL {fecha}" if fecha else ""
+            accion = f"COMPRAR NO{plazo}   ({precio_entrada*100:.0f}c por contrato)"
 
         edge = abs(s.delta) * 100
         url_line = f"\n  URL        : {s.market.url}" if s.market.url else ""
