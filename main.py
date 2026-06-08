@@ -43,7 +43,7 @@ def run_pipeline() -> List[DeltaSignal]:
         logger.info("Sin señales relevantes. Pipeline completo.")
         return []
 
-    delta_signals: List[DeltaSignal] = []
+    candidates: List[DeltaSignal] = []
 
     for fs in signals:
         # -- Capa 3: Crowd + Bayesian ------------------------------
@@ -58,10 +58,14 @@ def run_pipeline() -> List[DeltaSignal]:
         if not delta:
             continue
 
-        # -- Capa 6: Registro --------------------------------------
         capa6.save_signal(delta)
+        candidates.append(delta)
 
-        # -- Capa 8: Paper order -----------------------------------
+    # -- Filtro de correlacion: 1 señal por evento ----------------
+    best = _deduplicate(candidates)
+
+    delta_signals: List[DeltaSignal] = []
+    for delta in best:
         order = capa8.open_paper_order(delta)
         if order:
             delta_signals.append(delta)
@@ -71,6 +75,27 @@ def run_pipeline() -> List[DeltaSignal]:
 
     logger.info(f"PIPELINE COMPLETE — {len(delta_signals)} orden(es) paper abierta(s)")
     return delta_signals
+
+
+def _deduplicate(signals: List[DeltaSignal]) -> List[DeltaSignal]:
+    """Por cada evento (misma URL base), conserva solo la mejor señal."""
+    groups: dict = {}
+    for s in signals:
+        # Agrupar por URL del evento o por las primeras 6 palabras del mercado
+        if s.market.url:
+            key = s.market.url
+        else:
+            key = " ".join(s.market.question.lower().split()[:6])
+
+        score = abs(s.delta) * max(s.confidence, 0.01)
+        if key not in groups or score > groups[key][1]:
+            groups[key] = (s, score)
+
+    kept = [v[0] for v in groups.values()]
+    removed = len(signals) - len(kept)
+    if removed:
+        logger.info(f"Correlacion: {removed} señal(es) duplicada(s) descartada(s), queda la de mayor edge")
+    return kept
 
 
 def print_report(signals: List[DeltaSignal]):
