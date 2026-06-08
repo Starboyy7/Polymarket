@@ -26,19 +26,19 @@ def run_pipeline() -> List[DeltaSignal]:
     logger.info(f"PIPELINE START — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 65)
 
-    # ── Capa 1: Ingesta ──────────────────────────────────────────────
+    # -- Capa 1: Ingesta ----------------------------------------------
     markets, news = capa1.ingest_all()
     if not markets:
         logger.warning("Sin mercados disponibles. Abortando.")
         return []
 
-    # ── Capa 2: Filtrado Claude ───────────────────────────────────────
+    # -- Capa 2: Filtrado Claude ---------------------------------------
     signals = capa2.filter_signals(markets, news)
     if not signals:
         logger.info("Sin señales relevantes. Pipeline completo.")
         return []
 
-    # ── Capa 7 (pre-loop): obtener pesos actuales ─────────────────────
+    # -- Capa 7 (pre-loop): obtener pesos actuales ---------------------
     weights = capa7.get_weights()
 
     delta_signals: List[DeltaSignal] = []
@@ -46,25 +46,25 @@ def run_pipeline() -> List[DeltaSignal]:
     for fs in signals:
         cat = fs.market.category
 
-        # ── Capa 3A: Simulación de crowd ──────────────────────────────
+        # -- Capa 3A: Simulación de crowd ------------------------------
         crowd = capa3.simulate_crowd_reaction(fs)
 
-        # ── Capa 3B: Base rates bayesianas ────────────────────────────
+        # -- Capa 3B: Base rates bayesianas ----------------------------
         bayesian = capa3.get_bayesian_prior(cat, weights)
 
-        # ── Capa 4: Monte Carlo ───────────────────────────────────────
+        # -- Capa 4: Monte Carlo ---------------------------------------
         mc = capa4.run_monte_carlo(fs, crowd, bayesian)
 
-        # ── Capa 5: Señal delta ───────────────────────────────────────
+        # -- Capa 5: Señal delta ---------------------------------------
         delta = capa5.compute_delta_signal(fs, crowd, mc, bayesian)
         if not delta:
             continue
 
-        # ── Capa 6: Registro ──────────────────────────────────────────
+        # -- Capa 6: Registro ------------------------------------------
         capa6.save_signal(delta)
         delta_signals.append(delta)
 
-    # ── Capa 7 (post-loop): feedback ──────────────────────────────────
+    # -- Capa 7 (post-loop): feedback ----------------------------------
     capa7.run()
 
     logger.info(f"PIPELINE COMPLETE — {len(delta_signals)} señal(es) generada(s)")
@@ -101,12 +101,12 @@ def print_report(signals: List[DeltaSignal]):
         print("\n  Sin señales en este ciclo.\n")
         return
 
-    print(f"\n{'═'*65}")
+    print(f"\n{'='*65}")
     print(f"  SEÑALES GENERADAS: {len(signals)}")
-    print(f"{'═'*65}")
+    print(f"{'='*65}")
 
     for s in signals:
-        bar = "▲" if s.delta > 0 else "▼"
+        bar = "^" if s.delta > 0 else "v"
         print(f"""
   [{s.signal_id}] {s.action}  {bar}
   Mercado   : {s.market.question[:70]}
@@ -117,7 +117,7 @@ def print_report(signals: List[DeltaSignal]):
   Confianza : {s.confidence:.2f}
   Narrativa : {s.crowd_signal.narrative}
   Fuente    : {s.filtered_signal.news.source} — {s.filtered_signal.news.title[:60]}
-  {'─'*63}""")
+  {'-'*63}""")
 
 
 if __name__ == "__main__":

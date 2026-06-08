@@ -29,11 +29,11 @@ logger = logging.getLogger("backtest")
 
 
 def run_backtest():
-    print(f"\n{'═'*65}")
+    print(f"\n{'='*65}")
     print(f"  BACKTESTING — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  Capital inicial: ${capa8.STARTING_CAPITAL:,.0f} USDC")
     print(f"  Mercados históricos: {len(HISTORICAL_MARKETS)}")
-    print(f"{'═'*65}\n")
+    print(f"{'='*65}\n")
 
     capa6.initialize()
     capa8.initialize()
@@ -79,9 +79,9 @@ def print_report(results: List[Tuple[DeltaSignal, str]]):
     orders = capa8.get_all_orders()
     resolved = [o for o in orders if o["status"] == "resolved"]
 
-    print(f"\n{'═'*65}")
+    print(f"\n{'='*65}")
     print(f"  REPORTE DE BACKTESTING")
-    print(f"{'═'*65}")
+    print(f"{'='*65}")
     print(f"\n  Capital inicial : ${perf['starting_capital']:>10,.2f} USDC")
     print(f"  Capital final   : ${perf['portfolio_value']:>10,.2f} USDC")
     print(f"  P&L total       : ${perf['total_pnl']:>+10,.2f} USDC")
@@ -93,15 +93,15 @@ def print_report(results: List[Tuple[DeltaSignal, str]]):
         print(f"  Avg ganancia    : ${perf.get('avg_win', 0):>+.2f} USDC")
         print(f"  Avg pérdida     : ${perf.get('avg_loss', 0):>+.2f} USDC")
         pf = perf.get("profit_factor", 0)
-        print(f"  Profit factor   : {pf:.2f}x" if pf != float('inf') else "  Profit factor   : ∞ (sin pérdidas)")
+        print(f"  Profit factor   : {pf:.2f}x" if pf != float('inf') else "  Profit factor   : inf (sin pérdidas)")
 
-    print(f"\n{'─'*65}")
+    print(f"\n{'-'*65}")
     print(f"  DETALLE POR ORDEN")
-    print(f"{'─'*65}")
+    print(f"{'-'*65}")
 
     for o in resolved:
         won = o["pnl_usdc"] > 0
-        icon = "✓" if won else "✗"
+        icon = "OK" if won else "XX"
         print(f"""
   [{icon}] {o['order_id']} — {o['action']}
   Mercado  : {o['market_question'][:63]}
@@ -109,12 +109,12 @@ def print_report(results: List[Tuple[DeltaSignal, str]]):
   Entrada  : {o['entry_price']:.3f} | P_sim: {o['p_simulated']:.3f} | Δ: {o['delta']:+.3f}
   Invertido: ${o['usdc_invested']:.2f} USDC | Acciones: {o['shares']:.2f}
   Outcome  : {o['outcome']} → P&L: ${o['pnl_usdc']:+.2f} ({o['pnl_pct']:+.1f}%)
-  {'─'*63}""")
+  {'-'*63}""")
 
     # Categorías con mejor performance
     if resolved:
         print(f"\n  PERFORMANCE POR CATEGORÍA")
-        print(f"  {'─'*40}")
+        print(f"  {'-'*40}")
         by_cat: dict = {}
         for o in resolved:
             cat = o["category"]
@@ -127,7 +127,7 @@ def print_report(results: List[Tuple[DeltaSignal, str]]):
             wr = d["wins"] / d["total"] * 100 if d["total"] else 0
             print(f"  {cat:12s} | {d['wins']}/{d['total']} ({wr:.0f}%) | P&L: ${d['pnl']:+.2f}")
 
-    print(f"\n{'═'*65}\n")
+    print(f"\n{'='*65}\n")
 
 
 if __name__ == "__main__":

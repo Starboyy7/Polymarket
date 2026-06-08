@@ -29,7 +29,7 @@ def get_anthropic_client():
             except Exception:
                 pass
     raise RuntimeError(
-        "\n\n  ❌  API key no encontrada.\n"
+        "\n\n  ERROR  API key no encontrada.\n"
         "  Configura la variable de entorno ANTHROPIC_API_KEY:\n\n"
         "  Windows CMD:   set ANTHROPIC_API_KEY=sk-ant-...\n"
         "  Windows PS:    $env:ANTHROPIC_API_KEY='sk-ant-...'\n"

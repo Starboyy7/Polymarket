@@ -19,7 +19,7 @@ MAX_POSITION_PCT = 0.05      # máximo 5% del portafolio por posición
 MIN_CONFIDENCE   = 0.30      # confianza mínima para abrir orden
 
 
-# ── Dataclasses ───────────────────────────────────────────────────────────────
+# -- Dataclasses ---------------------------------------------------------------
 
 @dataclass
 class PaperOrder:
@@ -58,7 +58,7 @@ class PortfolioSnapshot:
     roi_pct: float
 
 
-# ── Database ──────────────────────────────────────────────────────────────────
+# -- Database ------------------------------------------------------------------
 
 @contextmanager
 def _db():
@@ -112,7 +112,7 @@ def initialize():
     logger.info(f"Paper trading DB initialized (capital: ${STARTING_CAPITAL:,.0f} USDC)")
 
 
-# ── Portfolio helpers ─────────────────────────────────────────────────────────
+# -- Portfolio helpers ---------------------------------------------------------
 
 def _get_cash() -> float:
     with _db() as conn:
@@ -150,7 +150,7 @@ def get_all_orders() -> List[dict]:
     return [dict(r) for r in rows]
 
 
-# ── Kelly Criterion ───────────────────────────────────────────────────────────
+# -- Kelly Criterion -----------------------------------------------------------
 
 def kelly_size(p_win: float, p_market: float, portfolio_value: float) -> float:
     """
@@ -169,7 +169,7 @@ def kelly_size(p_win: float, p_market: float, portfolio_value: float) -> float:
     return min(kelly * portfolio_value, max_bet)
 
 
-# ── Core: abrir orden ─────────────────────────────────────────────────────────
+# -- Core: abrir orden ---------------------------------------------------------
 
 def open_paper_order(signal: DeltaSignal) -> Optional[PaperOrder]:
     if signal.confidence < MIN_CONFIDENCE:
@@ -244,7 +244,7 @@ def open_paper_order(signal: DeltaSignal) -> Optional[PaperOrder]:
     return order
 
 
-# ── Core: resolver orden ──────────────────────────────────────────────────────
+# -- Core: resolver orden ------------------------------------------------------
 
 def resolve_paper_order(order_id: str, outcome: str):
     """
@@ -281,14 +281,14 @@ def resolve_paper_order(order_id: str, outcome: str):
         """, (exit_price, pnl_usdc, pnl_pct, outcome,
               datetime.now().isoformat(), order_id))
 
-    result = "✓ GANADA" if won else "✗ PERDIDA"
+    result = "OK GANADA" if won else "XX PERDIDA"
     logger.info(
         f"RESOLVED [{order_id}] {result} | outcome={outcome} | "
         f"P&L: ${pnl_usdc:+.2f} ({pnl_pct:+.1f}%) | cash: ${new_cash:.2f}"
     )
 
 
-# ── Performance report ────────────────────────────────────────────────────────
+# -- Performance report --------------------------------------------------------
 
 def performance_report() -> dict:
     orders = get_all_orders()
