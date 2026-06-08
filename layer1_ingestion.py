@@ -31,6 +31,7 @@ def fetch_markets(limit: int = 50) -> List[Market]:
             p_yes = _parse_price(m)
             if p_yes is None or not (0.01 < p_yes < 0.99):
                 continue
+            slug = m.get("slug", "")
             markets.append(Market(
                 id=str(m.get("id", "")),
                 question=m.get("question", "").strip(),
@@ -39,6 +40,7 @@ def fetch_markets(limit: int = 50) -> List[Market]:
                 volume=float(m.get("volume", 0) or 0),
                 condition_id=m.get("conditionId", ""),
                 description=(m.get("description", "") or "")[:400],
+                url=f"https://polymarket.com/event/{slug}" if slug else "",
             ))
         logger.info(f"Fetched {len(markets)} active markets from Polymarket")
         return markets
