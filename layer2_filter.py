@@ -1,15 +1,20 @@
-"""Capa 2 — Filtrado Claude: relevancia, novedad, credibilidad."""
+"""Capa 2 — Filtrado LLM: relevancia, novedad, credibilidad."""
 import json
 import logging
 from typing import List
-
-import anthropic
 
 import config
 from models import FilteredSignal, Market, NewsItem
 
 logger = logging.getLogger(__name__)
-_client = config.get_anthropic_client()
+_client = None
+
+
+def _get_client():
+    global _client
+    if _client is None:
+        _client = config.get_groq_client()
+    return _client
 
 
 def filter_signals(markets: List[Market], news_items: List[NewsItem]) -> List[FilteredSignal]:
@@ -62,12 +67,12 @@ Rules:
 Return ONLY valid JSON, no explanation."""
 
         try:
-            response = _client.messages.create(
-                model=config.CLAUDE_MODEL,
+            response = _get_client().chat.completions.create(
+                model=config.GROQ_MODEL,
                 max_tokens=1200,
                 messages=[{"role": "user", "content": prompt}],
             )
-            text = _extract_json(response.content[0].text)
+            text = _extract_json(response.choices[0].message.content)
             results = json.loads(text)
 
             for r in results:
@@ -88,7 +93,7 @@ Return ONLY valid JSON, no explanation."""
                 ))
 
         except Exception as exc:
-            logger.error(f"Claude filter error (batch {i}): {exc}")
+            logger.error(f"LLM filter error (batch {i}): {exc}")
 
     logger.info(f"Capa 2 complete: {len(signals)} signals from {len(news_items)} items")
     return signals

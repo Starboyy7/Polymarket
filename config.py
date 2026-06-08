@@ -1,41 +1,26 @@
 import os
-import sys
 
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = "claude-sonnet-4-6"
-
-# Rutas del token de sesión según plataforma (usado solo en Claude Code cloud)
-_SESSION_TOKEN_CANDIDATES = [
-    os.environ.get("CLAUDE_SESSION_INGRESS_TOKEN_FILE", ""),
-    "/home/claude/.claude/remote/.session_ingress_token",          # Linux cloud
-    os.path.expanduser("~/.claude/remote/.session_ingress_token"), # Linux/Mac local
-]
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL   = "llama-3.3-70b-versatile"
 
 
-def get_anthropic_client():
-    """Retorna un cliente Anthropic autenticado.
-    Prioridad: ANTHROPIC_API_KEY → token de sesión Claude Code.
-    En Windows/local: configura ANTHROPIC_API_KEY en variables de entorno.
+def get_groq_client():
+    """Retorna un cliente Groq autenticado.
+    Configura GROQ_API_KEY en variables de entorno.
+    Obtén tu key gratis en: https://console.groq.com
     """
-    import anthropic
-    if ANTHROPIC_API_KEY:
-        return anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    for path in _SESSION_TOKEN_CANDIDATES:
-        if path and os.path.exists(path):
-            try:
-                token = open(path).read().strip()
-                if token:
-                    return anthropic.Anthropic(auth_token=token)
-            except Exception:
-                pass
-    raise RuntimeError(
-        "\n\n  ERROR  API key no encontrada.\n"
-        "  Configura la variable de entorno ANTHROPIC_API_KEY:\n\n"
-        "  Windows CMD:   set ANTHROPIC_API_KEY=sk-ant-...\n"
-        "  Windows PS:    $env:ANTHROPIC_API_KEY='sk-ant-...'\n"
-        "  Mac/Linux:     export ANTHROPIC_API_KEY=sk-ant-...\n\n"
-        "  Obtén tu key en: https://console.anthropic.com\n"
-    )
+    from groq import Groq
+    if not GROQ_API_KEY:
+        raise RuntimeError(
+            "\n\n  ERROR  GROQ_API_KEY no encontrada.\n"
+            "  Configura la variable de entorno GROQ_API_KEY:\n\n"
+            "  Windows CMD:   set GROQ_API_KEY=gsk_...\n"
+            "  Windows PS:    $env:GROQ_API_KEY='gsk_...'\n"
+            "  Mac/Linux:     export GROQ_API_KEY=gsk_...\n\n"
+            "  Obtén tu key gratis en: https://console.groq.com\n"
+        )
+    return Groq(api_key=GROQ_API_KEY)
+
 
 POLYMARKET_GAMMA_API = "https://gamma-api.polymarket.com"
 POLYMARKET_CLOB_API  = "https://clob.polymarket.com"
