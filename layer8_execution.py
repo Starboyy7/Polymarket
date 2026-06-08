@@ -307,6 +307,8 @@ def performance_report() -> dict:
             "total_pnl": 0.0,
             "roi_pct": 0.0,
             "cash": cash,
+            "starting_capital": STARTING_CAPITAL,
+            "portfolio_value": cash + total_invested_open,
         }
 
     wins    = [o for o in resolved if o["pnl_usdc"] > 0]
